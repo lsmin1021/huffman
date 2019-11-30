@@ -49,20 +49,17 @@ int main(int argc, char *args[]){
 		printf("argument error!\n");
 		return 0;
 	}
-	int option;
-	option = strcmp(args[1], "-c");
 	strcpy(filename, args[2]);
-
-	if(option == 0){
+	if(strcmp(args[1], "-c")==0){
 		compress();
 	}
-	else decompress();	
-//	for(int i=0;i<128;i++){
-//		if(asciiArr[i].freq != 0){
-//			printf("'%c' >%s<\n",i, asciiArr[i].code);
-//		}
-//
-//	}
+	else if(strcmp(args[1], "-d") == 0){
+		decompress();
+	}
+	else{
+		printf("option error! input -c or -d\n");
+	}
+
 
 	free(head);
 
@@ -96,7 +93,7 @@ TREE* deleteNode(){
 	
 	return(delNode);
 }
-void printNode(TREE* node){
+/*void printNode(TREE* node){
 	if(node->num == -1){
 		printNode(node->left);
 		printNode(node->right);
@@ -104,7 +101,7 @@ void printNode(TREE* node){
 	else{
 		printf("'%c' : %d : %s\n", node->num, node->freq, node->code);
 	}
-}
+}*/
 void makeCode(TREE *node,int option,char c[]){
 	if(node == NULL) return ;
 
@@ -196,11 +193,11 @@ void compress(){
 	makeCode(tempNode->right,1,cc); //1로 시작하는 코드
 	//파일에 코드 쓰기
 	fileWrite();
-	printf("file wirte\n");
+//	printf("file wirte\n");
 }
 void codeInfo_write(FILE *fp){
 	fprintf(fp,"  %d\n",count);
-	printf("co = %d\n",count);
+//	printf("co = %d\n",count);
 	for(int i=0;i<128;i++){
 		if(asciiArr[i].freq != 0){
 			fputc(i,fp);//ascii 값
@@ -218,6 +215,11 @@ void fileWrite(){
 	strcpy(outfilename, filename);
 	strcat(outfilename,".zz");
 	wfp = fopen(outfilename,"wb");
+	if(rfp == NULL || wfp == NULL){
+		printf("[file error] file open failure!\n");
+		return;
+	}
+
 	int templen; //templen : 한 문자의 코드 길이
 	int cutlen;
 	char tempChar;
@@ -225,8 +227,6 @@ void fileWrite(){
 	outBuf[0] = 0;
 	nextBuf[0] = 0;
 	int printFlag = 0;
-	int ii=0;
-
 	//변환한 코드의 정보 쓰기
 	codeInfo_write(wfp);
 
@@ -237,7 +237,6 @@ void fileWrite(){
 			cutlen = 128 - strlen(outBuf);
 			
 			strncat(outBuf, asciiArr[tempChar].code, cutlen);
-			ii++;
 			writeinBit(outBuf, wfp);
 			outBuf[0] = '\0';
 			strcat(outBuf, asciiArr[tempChar].code+cutlen);// 다음 줄
@@ -310,12 +309,20 @@ void decompress(){
 	FILE* rfp; //input file
 	FILE* wfp; //output file
 	rfp = fopen(filename,"r");
+	if(rfp == NULL){
+		printf("[file error] file open failure\n");
+		return;
+	}
 	strcpy(outfilename, filename);
 	strcat(outfilename,".yy");
 	wfp = fopen(outfilename,"w");
+	if(wfp == NULL){
+		printf("[file error] file open failure\n");
+		return;
+	}
 
 	int lastbit = codeInfo_read(rfp);//코드 정보 읽어오기	
-	printf("last  = %d\n",lastbit);	
+//	printf("last  = %d\n",lastbit);	
 	char tempStr[150];
 	tempStr[0] = 0;
 	char tempByte[8];
@@ -330,7 +337,7 @@ void decompress(){
 		}
 		next = fgetc(rfp);
 		if(feof(rfp)){
-			printf("slslsls %d\n",lastbit);
+		//	printf("slslsls %d\n",lastbit);
 			for(int i=7;i>=0;i--){
 				tempByte[i] = cur%2 +'0';
 				cur>>=1;
