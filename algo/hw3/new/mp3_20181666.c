@@ -1,3 +1,12 @@
+//=======================================//
+// mp3_20181666                          //
+// Huffman Coding for File Compression   //
+//										 //
+// version: 0.1, 12/03/2019              //
+// Seungmin Lee 20181666                 //
+//                                       //
+// usage: ./mp3_20181666 option filename //
+//=======================================//
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -13,24 +22,23 @@ typedef struct ASCII_{ //각 문자에 대한 정보를 저장하는 구조체
 
 ascii asciiArr[ASCII_NUM]; // 전제 ascii 배열
 
-typedef struct TREE_{ //huffman coding을 위한 구조체
+typedef struct HUFF_{ //huffman coding을 위한 구조체
 	int num;  //아스키 코드 저장
 	int freq; //문자가 나오는 빈도 수
-	char code[100]; //변환한 코드
-	struct TREE_ *left; //왼쪽 자식노드(트리)
-	struct TREE_ *right;//오른쪽 자식노드(트리)
-	struct TREE_ *next; //다음 노드를 가리키는 포인터(리스트)
-}TREE;
+	struct HUFF_ *left; //왼쪽 자식노드(트리)
+	struct HUFF_ *right;//오른쪽 자식노드(트리)
+	struct HUFF_ *next; //다음 노드를 가리키는 포인터(리스트)
+}HUFF;
 
-TREE *u,*v,*w;
-TREE *head;
+HUFF *u,*v,*w;
+HUFF *head;
 
 
 //압축을 위한 함수들
 void compress(); //압축
-void insertTree(TREE* newNode); //트리에 노드 inser하는 함수
-TREE* deleteNode(); //리스트에서 노드를 삭제하는 함수
-void makeCode(TREE* node, int option, char c[]); //트리에서 코드를 생성하는 함수
+void insertTree(HUFF* newNode); //트리에 노드 inser하는 함수
+HUFF* deleteNode(); //리스트에서 노드를 삭제하는 함수
+void makeCode(HUFF* node, int option, char c[]); //트리에서 코드를 생성하는 함수
 void fileWrite(); //파일에 코딩한 정보 출력
 int writeinBit(char c[], FILE *fp); //bit로 쓰는 함수
 unsigned char pack(char *buf); //코드 정보를 출력시 bit로 바꾸는 함수
@@ -80,7 +88,7 @@ int main(int argc, char *args[]){
 // linked list에 insert            //
 // freq 순으로 insertion sort      //
 //=================================//
-void insertTree(TREE* newNode){
+void insertTree(HUFF* newNode){
 
 	// linked list가 빈 경우 바로 삽입
 	if(head->next == NULL){
@@ -89,7 +97,7 @@ void insertTree(TREE* newNode){
 	}
 	// *temp : 이동시키는 현재 노드
 	// *prev : 이전 노드
-	TREE *temp, *prev;
+	HUFF *temp, *prev;
 	temp = head->next; // 맨 처음 temp를 맨 앞 노드로
 	prev = head; 
 	// insertion sort
@@ -113,8 +121,8 @@ void insertTree(TREE* newNode){
 //                                  //
 // list에서 맨 앞 노드 삭제하고 반환//
 // =================================//
-TREE* deleteNode(){
-	TREE* delNode;
+HUFF* deleteNode(){
+	HUFF* delNode;
 
 	delNode = head->next; // 맨 앞노드 : delNode
 	head->next = head->next->next; //delNode 삭제
@@ -132,7 +140,7 @@ TREE* deleteNode(){
 //         오른쪽 자식이라면 1      //
 // c : 부모 노드의 코드             //
 // =================================//
-void makeCode(TREE *node,int option,char c[]){
+void makeCode(HUFF *node,int option,char c[]){
 	// 만약 빈 노드라면 return
 	if(node == NULL) return;
 
@@ -195,10 +203,9 @@ void compress(){
 	fclose(fp);
 
 	// linked list의 head 생성 및 초기화
-	head = (TREE*)malloc(sizeof(TREE));
+	head = (HUFF*)malloc(sizeof(HUFF));
 	head->num = -1;
 	head->freq = -1;
-	head->code[0] = 0;
 	head->left = NULL;
 	head->right = NULL;
 	head->next = NULL;
@@ -206,10 +213,9 @@ void compress(){
 	// 각 아스키 문자에 대한 노드 생성
 	for(int i=0;i<128;i++){  
 		if(asciiArr[i].freq != 0){ // 문자가 한 번이라도 나온 경우 node 생성
-			TREE *newNode = (TREE*)malloc(sizeof(TREE));
+			HUFF *newNode = (HUFF*)malloc(sizeof(HUFF));
 			newNode->num = i;
 			newNode->freq = asciiArr[i].freq;
-			newNode->code[0] = 0;
 			newNode->left = NULL;
 			newNode->next = NULL;
 			insertTree(newNode); //insert single node
@@ -217,7 +223,7 @@ void compress(){
 	}
 
 	// 포인터 이동을 위한 tempNode
-	TREE* tempNode;
+	HUFF* tempNode;
 	tempNode = head->next; //리스트 맨 앞의 노드
 
 	// 코드 만들기 과정
@@ -225,10 +231,9 @@ void compress(){
 		u = deleteNode(); // 리스트 맨 앞의 노드 u, v 가져오기
 		v = deleteNode();
 		// 새로운 노드 w (u, v 결합을 위한 노드)생성 및 초기화
-		TREE* w = (TREE*)malloc(sizeof(TREE)); 
+		HUFF* w = (HUFF*)malloc(sizeof(HUFF)); 
 		w->num = -1;
 		w->freq = u->freq + v->freq;
-		w->code[0] = 0;
 		w->left = u;  // w 왼쪽 자식 : u
 		w->right = v; // w 오른쪽 자식 : v 
 		w->next = NULL;
